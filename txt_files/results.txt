@@ -1,0 +1,86 @@
+Model Evaluation (New Data):
+Epochs: 200
+Batch size: 128
+Sequence length: 200
+Layer size: 100
+Neurons: 64
+Median Absolute Error (MAE): 0.75
+Mean Absolute Percentage Error (MAPE): 1.3 %
+Median Absolute Percentage Error (MDAPE): 1.14 %
+1/1 [==============================] - 0s 25ms/step
+The close price for KO at 2024-02-17 was 59.39
+The predicted close price is 58.45000076293945 (-1.61%)
+
+Selected Features: ['Close', 'others_cr', 'High', 'Low', 'trend_ichimoku_conv', 'volatility_kcl', 'Open', 'trend_ema_fast', 'trend_sma_fast', 'volatility_dcl']
+USING SELECTED FEATURES:
+Epochs: 200
+Batch size: 128
+Sequence length: 200
+Layer size: 100
+Neurons: 64
+Median Absolute Error (MAE): 2.84
+Mean Absolute Percentage Error (MAPE): 4.87 %
+Median Absolute Percentage Error (MDAPE): 5.49 %
+1/1 [==============================] - 0s 24ms/step
+The close price for KO at 2024-02-18 was 59.39
+The predicted close price is 55.84000015258789 (-6.36%)
+
+Epochs: 300
+Batch size: 128
+Sequence length: 1
+Layer size: 100
+Neurons: 64
+Median Absolute Error (MAE): 0.87
+Mean Absolute Percentage Error (MAPE): 1.51 %
+Median Absolute Percentage Error (MDAPE): 1.43 %
+1/1 [==============================] - 0s 14ms/step
+The close price for KO at 2024-02-18 was 59.39
+The predicted close price is 58.31999969482422 (-1.83%)
+
+Epochs: 300
+Batch size: 128
+Sequence length: 1
+Layer size: 100
+Neurons: 128
+Median Absolute Error (MAE): 0.84
+Mean Absolute Percentage Error (MAPE): 1.47 %
+Median Absolute Percentage Error (MDAPE): 1.41 %
+1/1 [==============================] - 0s 15ms/step
+The close price for KO at 2024-02-18 was 59.39
+The predicted close price is 58.439998626708984 (-1.63%)
+Median Absolute Error (MAE): 1.04
+
+Epochs: 500
+Batch size: 128
+Sequence length: 1
+Layer size: 100
+Neurons: 128
+Mean Absolute Percentage Error (MAPE): 1.8 %
+Median Absolute Percentage Error (MDAPE): 1.76 %
+1/1 [==============================] - 0s 14ms/step
+The close price for KO at 2024-02-18 was 59.39
+The predicted close price is 58.18000030517578 (-2.08%)
+
+Epochs: 500
+Batch size: 128
+Sequence length: 1
+Layer size: 100
+Neurons: 64
+Median Absolute Error (MAE): 0.51
+Mean Absolute Percentage Error (MAPE): 0.9 %
+Median Absolute Percentage Error (MDAPE): 0.74 %
+1/1 [==============================] - 0s 12ms/step
+The close price for KO at 2024-02-18 was 59.39
+The predicted close price is 59.04999923706055 (-0.58%)
+
+Epochs: 500
+Batch size: 128
+Sequence length: 1
+Layer size: 100
+Neurons: 32
+Median Absolute Error (MAE): 0.72
+Mean Absolute Percentage Error (MAPE): 1.24 %
+Median Absolute Percentage Error (MDAPE): 1.06 %
+1/1 [==============================] - 0s 13ms/step
+The close price for KO at 2024-02-18 was 59.39
+The predicted close price is 58.529998779296875 (-1.47%)
