@@ -1,3 +1,5 @@
+# WORK IN PROGRESS 
+
 from alpaca.trading.client import TradingClient
 
 api_key = 'CKTUR8QA4H4XNX9YM8FS'
