@@ -1,9 +1,44 @@
 STOCK PROJECT
 * UPDATE STOCK DATA
-* BUILD FUNCTION TO PARSE THROUGH ONLY S&P500 Companies
+* CREATE INTRADAY MODEL FOR COMPARISON
+* READJUST MODEL FORMAT (Deep LSTM-Attention Q-Learning)
+* PERFORM FEATURE ANALYSIS WITH ALL TICKERS
+* TRAIN MODEL WITH MOST IMPACTFUL FEATURES (65-70% ACCURACY GOAL)
 * ADJUST MODEL TO PREDICT NEXT 5 DAYS OF CLOSING PRICES
     - ONE MODEL PER COMPANY ADJUSTED WEEKLY
 
-NCAA PROJECT
-* UPDATE CBBDATA
-* BUILD PROTO MODEL
+
+
+
+
+Frontend: The frontend of the web application is responsible for the user interface and user interaction. It typically consists of HTML, CSS, and JavaScript code. For modern web applications, a popular choice for frontend development is a JavaScript framework/library such as React.js, Angular, or Vue.js. These frameworks provide tools for building interactive and responsive user interfaces.
+
+
+Backend: The backend of the web application handles server-side logic, database interactions, and API endpoints. For a Python-based backend, popular choices include:
+
+Flask: Flask is a lightweight web framework for Python that allows you to quickly build web applications and APIs. It provides a simple and flexible architecture, making it suitable for projects of all sizes.
+
+Django: Django is a high-level web framework for Python that follows the "batteries-included" philosophy, providing a robust set of features for building web applications. It includes built-in authentication, database ORM, and administrative interfaces.
+
+
+Database: The database stores and manages the application's data. For Python-based web applications, you can use a variety of databases, including:
+
+SQL databases: such as PostgreSQL, MySQL, or SQLite. These databases are widely used for relational data storage and are supported by ORM (Object-Relational Mapping) frameworks like SQLAlchemy (for Flask) or Django ORM (for Django).
+
+NoSQL databases: such as MongoDB or Redis. These databases are commonly used for storing unstructured or semi-structured data and are suitable for applications with flexible data requirements.
+
+
+Integration with Python Machine Learning Script: To integrate a Python machine learning script into your web application, you can use various approaches:
+
+REST API: Expose the machine learning functionality as a RESTful API endpoint using Flask or Django. This allows the frontend to communicate with the machine learning script by making HTTP requests.
+
+Background Tasks: Execute the machine learning script as a background task using a task queue like Celery. This is useful for long-running or resource-intensive tasks that should not block the web application's main thread.
+
+Serverless Computing: Deploy the machine learning script as a serverless function using platforms like AWS Lambda or Google Cloud Functions. This allows the script to be executed on-demand without managing server infrastructure.
+
+
+Deployment and Hosting: Once the web application is developed, it needs to be deployed and hosted on a server. Popular choices for deployment and hosting include:
+
+Platform-as-a-Service (PaaS) providers: such as Heroku, PythonAnywhere, or AWS Elastic Beanstalk. These platforms offer managed hosting solutions that abstract away server management tasks, allowing you to focus on application development.
+
+Infrastructure-as-a-Service (IaaS) providers: such as AWS EC2, DigitalOcean, or Google Cloud Compute Engine. These platforms provide virtual servers (instances) that you can configure and manage according to your requirements.
