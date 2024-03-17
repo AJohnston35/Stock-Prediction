@@ -1,7 +1,3 @@
-# Author: Alex Johnston
-# Purpose: Retrieve stock market data from Yahoo! Finance and move that data to SQLite database
-# Up to date as of: March 15, 2024
-
 # For stock data
 import yfinance as yf
 # For data preprocessing
@@ -10,29 +6,29 @@ import numpy as np
 import pandas as pd
 # Connection to SQLite
 from sqlalchemy import create_engine
-# Define your SQLite connection details
-engine = create_engine('sqlite:///../database/db.sqlite')
+engine = create_engine('sqlite:///database/db.sqlite')
 # For generating technical indicators on market data
 import ta
+
+#from news_sentiment import Sentiment
 
 class Stock:
     # Class to represent a stock
     def stock_data(self):
-        historical_data = self.ticker.history(period = '1y')
+        historical_data = self.ticker.history(period='10y')
         
         if historical_data.empty:
-            print(f"No data available for {self.ticker} in the past trading week")
+            print(f"No data available for {self.symbol} in the past trading week")
         else:
-            historical_data.insert(0,'Ticker',self.ticker)
-            historical_data.insert(1,'Market_Cap', self.market_cap)
-            historical_data.insert(2,'Date', historical_data.index)
+            historical_data.insert(0, 'Ticker', self.symbol)
+            historical_data.insert(1, 'Market_Cap', self.market_cap)
+            historical_data.insert(2, 'Date', historical_data.index)
             
             # Calculate technical indicators
             historical_data = ta.add_all_ta_features(historical_data, open='Open', high='High', low='Low', close='Close', volume='Volume', fillna=True)
-            historical_data['Increase_Decrease'] = np.where(historical_data['Volume'].shift(-1) > historical_data['Volume'],1,0)
+            historical_data['Increase_Decrease'] = np.where(historical_data['Volume'].shift(-1) > historical_data['Volume'], 1, 0)
             historical_data['Returns'] = historical_data['Close'].pct_change()
-
-            historical_data.to_sql('daily_data', con=engine, if_exists='append', index=False)
+            historical_data.to_sql('stock_data', con=engine, if_exists='append', index=False)
 
     def stock_info(self):
         info = self.ticker.info
@@ -53,13 +49,13 @@ def main():
         market_cap = row['MarketCapCategory']
         obj = Stock(ticker, market_cap)
         obj.stock_data()
-        obj.stock_info()
+        # obj.stock_info()  # Uncomment this line if you want to print stock information
         i += 1 
         print(str(i) + " out of " + str(len(df)))
         
 if __name__ == "__main__":
     main()
-    
+
 '''
 msft = yf.Ticker("MSFT")
 
