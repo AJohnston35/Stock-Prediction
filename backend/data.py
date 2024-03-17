@@ -10,7 +10,7 @@ engine = create_engine('sqlite:///database/db.sqlite')
 # For generating technical indicators on market data
 import ta
 
-#from news_sentiment import Sentiment
+from news_sentiment import Sentiment
 
 class Stock:
     # Class to represent a stock
@@ -23,20 +23,32 @@ class Stock:
             historical_data.insert(0, 'Ticker', self.symbol)
             historical_data.insert(1, 'Market_Cap', self.market_cap)
             historical_data.insert(2, 'Date', historical_data.index)
-            
+            sentiment = self.stock_sentiment()
             # Calculate technical indicators
             historical_data = ta.add_all_ta_features(historical_data, open='Open', high='High', low='Low', close='Close', volume='Volume', fillna=True)
             historical_data['Increase_Decrease'] = np.where(historical_data['Volume'].shift(-1) > historical_data['Volume'], 1, 0)
             historical_data['Returns'] = historical_data['Close'].pct_change()
-            historical_data.to_sql('stock_data', con=engine, if_exists='append', index=False)
+            merged_df = pd.merge(historical_data, sentiment, left_on='Date', right_on='date', how='left')
+            merged_df.to_sql('stock_data', con=engine, if_exists='append', index=False)
 
+    def stock_sentiment(self):
+        obj = Sentiment(self.symbol, self.name, 3650)
+        news_df = obj.load_news()
+        news_df.fillna(0)
+        #  Perform sentiment analysis
+        results_df = obj.perform_sentiment_analysis(news_df)
+        #  Group by date
+        grouped_df = results_df.set_index('date').groupby(pd.Grouper(freq='D')).sum()
+        return grouped_df
+    
     def stock_info(self):
         info = self.ticker.info
         print(info)
         
-    def __init__(self, symbol, market_cap):
+    def __init__(self, symbol, market_cap, name):
         self.symbol = symbol
         self.market_cap = market_cap
+        self.name = name
         self.ticker = yf.Ticker(symbol)
 
 def main():
@@ -47,9 +59,9 @@ def main():
     for index, row in df.iterrows():
         ticker = row['Ticker']
         market_cap = row['MarketCapCategory']
-        obj = Stock(ticker, market_cap)
+        name = row['Name']
+        obj = Stock(ticker, market_cap, name)
         obj.stock_data()
-        # obj.stock_info()  # Uncomment this line if you want to print stock information
         i += 1 
         print(str(i) + " out of " + str(len(df)))
         

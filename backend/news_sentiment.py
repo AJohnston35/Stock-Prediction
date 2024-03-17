@@ -1,6 +1,5 @@
 import pandas as pd
 import math
-import plotly.graph_objects as go
 import numpy as np
 import datetime
 from pandas.tseries.holiday import USFederalHolidayCalendar
@@ -120,20 +119,3 @@ class Sentiment:
         self.symbol = symbol
         self.name = name
         self.past_days = past_days
-
-def main():
-    symbol = 'WMT'
-    name = 'Walmart'
-    past_days = 50
-    obj = Sentiment(symbol, name, past_days)
-    news_df = obj.load_news()
-    news_df.fillna(0)
-    #  Perform sentiment analysis
-    results_df = obj.perform_sentiment_analysis(news_df)
-    #  Group by date
-    grouped_df = results_df.set_index('date').groupby(pd.Grouper(freq='D')).sum()
-    #  Plot graphs
-    obj.save_csv(grouped_df)
-
-if __name__ == "__main__":
-    main()
