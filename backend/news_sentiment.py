@@ -3,7 +3,7 @@ import requests
 import concurrent.futures
 from ratelimit import limits, sleep_and_retry
 import sqlite3
-#hello world
+
 # Sample list of tickers
 tickers = pd.read_csv('csv_files/stock_list.csv')['Code']
 
