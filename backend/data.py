@@ -9,6 +9,11 @@ conn = sqlite3.connect('database/sentiment_data.db')
 # For generating technical indicators on market data
 import ta
 
+# READ SENTIMENT DATA FROM sentiment_data.db
+# WRITE SENTIMENT DATA TO stock_data.db
+# READ INTEREST RATES FROM FEDFUNDS.csv
+# WRITE INTEREST RATES TO stock_data.db
+
 class Stock:
     # Class to represent a stock
     def stock_data(self):
@@ -20,6 +25,7 @@ class Stock:
             historical_data.insert(0, 'Ticker', self.symbol)
             historical_data.insert(1, 'Date', historical_data.index)
             # Calculate technical indicators
+            
             historical_data = ta.add_all_ta_features(historical_data, open='Open', high='High', low='Low', close='Close', volume='Volume', fillna=True)
             historical_data['Increase_Decrease'] = np.where(historical_data['Volume'].shift(-1) > historical_data['Volume'], 1, 0)
             historical_data['Returns'] = historical_data['Close'].pct_change()
@@ -29,6 +35,14 @@ class Stock:
         info = self.ticker.info
         print(info)
         
+    def add_sentiment(self):
+        print("Hello")
+        # FILL IN GAPS IN SENTIMENT DATA
+        # CREATE COLUMN "WEIGHTED AVERAGE" FOR ENTIRE DATASET
+        # ASSIGN WEEKDAY VALUE TO EACH DAY
+        # THEN TAKE AVERAGE OF FRIDAY - SUNDAY REPORTS
+        # MERGE WITH STOCK DATA
+    
     def __init__(self, symbol, name):
         self.symbol = symbol
         self.name = name
