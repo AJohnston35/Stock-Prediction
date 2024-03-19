@@ -48,9 +48,42 @@ class Stock:
         self.name = name
         self.ticker = yf.Ticker(symbol)
 
+import datetime
+
+def fix_sentiment():
+    print("Fixing sentiment data")
+    # FILL IN GAPS IN SENTIMENT DATA
+    # CREATE COLUMN "WEIGHTED AVERAGE" FOR ENTIRE DATASET
+    # ASSIGN WEEKDAY VALUE TO EACH DAY
+    # THEN TAKE AVERAGE OF FRIDAY - SUNDAY REPORTS
+    # MERGE WITH STOCK DATA
+
+def fix_interest_rates():
+    print("Fixing interest rates")
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv('csv_files/FEDFUNDS.csv')
+
+    # Convert the "DATE" column to datetime format
+    df['DATE'] = pd.to_datetime(df['DATE'])
+
+    # Create a DataFrame with daily dates for each month
+    date_range = pd.date_range(start=df['DATE'].min(), end=df['DATE'].max(), freq='D')
+    daily_df = pd.DataFrame({'DATE': date_range})
+
+    # Merge the daily DataFrame with the original DataFrame using a left join
+    merged_df = daily_df.merge(df, on='DATE', how='left')
+
+    # Fill missing values in the interest rate column using forward fill (ffill)
+    merged_df['FEDFUNDS'] = merged_df['FEDFUNDS'].ffill()
+
+    # Save the extrapolated data to a new CSV file
+    merged_df.to_csv('csv_files/extrapolated_interest_rates.csv', index=False)
+    
+    
 def main():
     print("Retrieving stock data")
-    df = pd.read_csv('csv_files/stock_list.csv')
+    fix_interest_rates()
+    """df = pd.read_csv('csv_files/stock_list.csv')
 
     i = 0
     for index, row in df.iterrows():
@@ -60,6 +93,6 @@ def main():
         obj.stock_data()
         i += 1 
         print(str(i) + " out of " + str(len(df)))
-        
+        """
 if __name__ == "__main__":
     main()
