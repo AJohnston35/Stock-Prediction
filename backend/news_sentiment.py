@@ -12,12 +12,31 @@ import requests
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import itertools
+import concurrent.futures
+MAX_THREADS = 30
+
 API_KEY = "65f5adcce659e6.99552900"
 
 tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
 model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
 class Sentiment:
+    def retrieve_nasdaq(self):
+        url = f'https://eodhd.com/api/exchange-symbol-list/NASDAQ?api_token=65f5adcce659e6.99552900&fmt=json'
+        data = requests.get(url).json()
+        print(data)
+        data = pd.DataFrame(data)
+        data.to_csv('csv_files/NASDAQ_stock_list.csv')
+        return data
+    
+    def retrieve_nyse(self):
+        url = f'https://eodhd.com/api/exchange-symbol-list/NYSE?api_token=65f5adcce659e6.99552900&fmt=json'
+        data = requests.get(url).json()
+        print(data)
+        data = pd.DataFrame(data)
+        data.to_csv('csv_files/NYSE_stock_list.csv')
+        return data
+    
     def get_biz_days_delta_date(self, start_date_str, delta_days):
         start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = start_date + (delta_days * US_BUSINESS_DAY)
@@ -34,6 +53,8 @@ class Sentiment:
             date = pd.to_datetime(item["date"], utc=True)
             result_df = pd.DataFrame({"title": [title], "desc": [desc], "date": [date]})
             results_df = pd.concat([results_df, result_df], axis=0, ignore_index=True)
+        results_df.to_csv(f'csv_files/{self.symbol}_news.csv')
+        time.sleep(0.25)
         return results_df
 
     def load_news(self):
@@ -48,7 +69,7 @@ class Sentiment:
             start_date_str = self.get_biz_days_delta_date(today_date_str, - start_day)
             end_date_str = self.get_biz_days_delta_date(today_date_str, - end_day)
             #  Fetch news
-            if i % 10 == 0:
+            if i % 5 == 0:
                 print(f"Fetching news for day {start_day} of {self.past_days}")
             day_news_df = self.fetch_news(start_date_str, end_date_str, limit, 0)
             news_df = pd.concat([news_df, day_news_df])
@@ -112,10 +133,48 @@ class Sentiment:
             results_df = pd.concat([results_df, batch_results_df], ignore_index=True)
         return results_df
 
-    def save_csv(self, df):
-        df.to_csv(f'csv_files/{self.symbol}_news_sentiment.csv')
-    
     def __init__(self, symbol, name, past_days):
         self.symbol = symbol
         self.name = name
         self.past_days = past_days
+        
+def download_news(stock_df):
+    threads = min(MAX_THREADS, len(stock_df))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+        executor.map(Sentiment(stock_df['Code'], stock_df['Name'], 3650).load_news, stock_df)
+
+def merge_csvs():
+    nasdaq_df = pd.read_csv('csv_files/NASDAQ_stock_list.csv')
+    nyse_df = pd.read_csv('csv_files/NYSE_stock_list.csv')
+
+    # Filter NYSE tickers that are not in NASDAQ
+    nyse_unique = nyse_df[~nyse_df['Code'].isin(nasdaq_df['Code'])]
+
+    # Concatenate NASDAQ and unique NYSE tickers
+    combined_df = pd.concat([nasdaq_df, nyse_unique], ignore_index=True)
+
+    # Save the merged DataFrame to a CSV file
+    combined_df.to_csv('csv_files/stock_list.csv', index=False)
+
+    return combined_df
+
+    
+
+def main():
+    t0 = time.time()
+    df = merge_csvs()
+    #download_news(df)
+    t1 = time.time()
+    print(f"Time taken: {t1 - t0} seconds")
+    
+    """obj = Sentiment("AAPL", "Apple Inc.", 3650)
+    news_df = obj.load_news()
+    news_df.fillna(0)
+    results_df = obj.perform_sentiment_analysis(news_df)
+    grouped_df = results_df.set_index('date').groupby(pd.Grouper(freq='D')).sum()
+    print(grouped_df)"""
+    
+    
+
+if __name__ == "__main__":
+    main()
