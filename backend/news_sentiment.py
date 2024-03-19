@@ -13,30 +13,18 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import itertools
 import concurrent.futures
-MAX_THREADS = 30
+from ratelimit import limits, RateLimitException, sleep_and_retry
+
+MAX_TICKER_THREADS = 8
+MAX_URL_THREADS = 32
 
 API_KEY = "65f5adcce659e6.99552900"
 
 tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
 model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
-class Sentiment:
-    def retrieve_nasdaq(self):
-        url = f'https://eodhd.com/api/exchange-symbol-list/NASDAQ?api_token=65f5adcce659e6.99552900&fmt=json'
-        data = requests.get(url).json()
-        print(data)
-        data = pd.DataFrame(data)
-        data.to_csv('csv_files/NASDAQ_stock_list.csv')
-        return data
-    
-    def retrieve_nyse(self):
-        url = f'https://eodhd.com/api/exchange-symbol-list/NYSE?api_token=65f5adcce659e6.99552900&fmt=json'
-        data = requests.get(url).json()
-        print(data)
-        data = pd.DataFrame(data)
-        data.to_csv('csv_files/NYSE_stock_list.csv')
-        return data
-    
+# Class functions
+class Sentiment:    
     def get_biz_days_delta_date(self, start_date_str, delta_days):
         start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = start_date + (delta_days * US_BUSINESS_DAY)
@@ -45,6 +33,7 @@ class Sentiment:
 
     def fetch_news(self, start_date_str, end_date_str, limit, offset=0):
         url = f'https://eodhistoricaldata.com/api/news?api_token={API_KEY}&s={self.symbol}&limit={limit}&offset={offset}&from={start_date_str}&to={end_date_str}'
+        print(url)
         news_json = requests.get(url).json()
         results_df = pd.DataFrame()
         for item in news_json:
@@ -53,29 +42,35 @@ class Sentiment:
             date = pd.to_datetime(item["date"], utc=True)
             result_df = pd.DataFrame({"title": [title], "desc": [desc], "date": [date]})
             results_df = pd.concat([results_df, result_df], axis=0, ignore_index=True)
-        results_df.to_csv(f'csv_files/{self.symbol}_news.csv')
-        time.sleep(0.25)
+        time.sleep(1)
         return results_df
 
     def load_news(self):
-        limit = 40
+        limit = 8
         today = datetime.datetime.today()
         today_date_str = today.strftime("%Y-%m-%d")
         news_df = pd.DataFrame()
-        #  Get news for each day
+
+        # Define a function to fetch news for a specific day
+        def fetch_news_for_day(start_date, end_date):
+            return self.fetch_news(start_date, end_date, limit, 0)
+
+        # Create a list of date ranges to fetch news for each day
+        date_ranges = []
         for i in range(0, self.past_days):
             start_day = self.past_days - i
             end_day = self.past_days - i - 1
-            start_date_str = self.get_biz_days_delta_date(today_date_str, - start_day)
-            end_date_str = self.get_biz_days_delta_date(today_date_str, - end_day)
-            #  Fetch news
-            if i % 5 == 0:
-                print(f"Fetching news for day {start_day} of {self.past_days}")
-            day_news_df = self.fetch_news(start_date_str, end_date_str, limit, 0)
-            news_df = pd.concat([news_df, day_news_df])
-            #  Throttle requests
-            if i % 20 == 0:
-                time.sleep(2)
+            start_date_str = self.get_biz_days_delta_date(today_date_str, -start_day)
+            end_date_str = self.get_biz_days_delta_date(today_date_str, -end_day)
+            date_ranges.append((start_date_str, end_date_str))
+
+        # Use multithreading to fetch news for each day
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_URL_THREADS) as executor:
+            results = list(executor.map(lambda x: fetch_news_for_day(x[0], x[1]), date_ranges))
+
+        # Concatenate the results into a single DataFrame
+        news_df = pd.concat(results, ignore_index=True)
+        news_df.to_csv(f'csv_files/news/{self.symbol}_news.csv', index=False)
         return news_df
 
     def is_empty_string(self, str):
@@ -133,15 +128,13 @@ class Sentiment:
             results_df = pd.concat([results_df, batch_results_df], ignore_index=True)
         return results_df
 
-    def __init__(self, symbol, name, past_days):
+    def __init__(self, symbol, past_days):
         self.symbol = symbol
-        self.name = name
         self.past_days = past_days
+
+
         
-def download_news(stock_df):
-    threads = min(MAX_THREADS, len(stock_df))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-        executor.map(Sentiment(stock_df['Code'], stock_df['Name'], 3650).load_news, stock_df)
+
 
 def merge_csvs():
     nasdaq_df = pd.read_csv('csv_files/NASDAQ_stock_list.csv')
@@ -158,22 +151,58 @@ def merge_csvs():
 
     return combined_df
 
+def retrieve_nasdaq():
+    url = f'https://eodhd.com/api/exchange-symbol-list/NASDAQ?api_token=65f5adcce659e6.99552900&fmt=json'
+    data = requests.get(url).json()
+    print(data)
+    data = pd.DataFrame(data)
+    data.to_csv('csv_files/NASDAQ_stock_list.csv')
+    return data
+
+def retrieve_nyse():
+    url = f'https://eodhd.com/api/exchange-symbol-list/NYSE?api_token=65f5adcce659e6.99552900&fmt=json'
+    data = requests.get(url).json()
+    print(data)
+    data = pd.DataFrame(data)
+    data.to_csv('csv_files/NYSE_stock_list.csv')
+    return data
     
+   
+# Sample list of tickers
+tickers = pd.read_csv('csv_files/stock_list.csv')['Code']
+
+ONE_MINUTE = 60
+MAX_CALLS_PER_MINUTE = 1000
+
+@sleep_and_retry
+@limits(calls=MAX_CALLS_PER_MINUTE, period=ONE_MINUTE)
+def access_rate_limited_api(ticker):
+    url = f'https://eodhd.com/api/sentiments?s={ticker}&from=2014-03-19&to=2024-03-19&api_token=65f5adcce659e6.99552900&fmt=json'
+    response = requests.get(url)
+    data = response.json()
+    df = pd.DataFrame(data)
+    df.to_csv(f'csv_files/news/{ticker}_sentiment.csv')
+    return "Processed " + ticker
+
+def process_ticker(ticker):
+    try:
+        return access_rate_limited_api(ticker)
+    except Exception as e:
+        return f"Error processing {ticker}: {e}"
 
 def main():
-    t0 = time.time()
-    df = merge_csvs()
-    #download_news(df)
-    t1 = time.time()
-    print(f"Time taken: {t1 - t0} seconds")
+    # Define the maximum number of threads
+    max_threads = 50  # Adjust this based on your system's capabilities
     
-    """obj = Sentiment("AAPL", "Apple Inc.", 3650)
-    news_df = obj.load_news()
-    news_df.fillna(0)
-    results_df = obj.perform_sentiment_analysis(news_df)
-    grouped_df = results_df.set_index('date').groupby(pd.Grouper(freq='D')).sum()
-    print(grouped_df)"""
-    
+    # Use ThreadPoolExecutor to create a pool of threads
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        # Submit tasks for each ticker to the executor
+        futures = {executor.submit(process_ticker, ticker): ticker for ticker in tickers}
+        
+        # Iterate over completed futures and print results
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            print(result)       
     
 
 if __name__ == "__main__":
