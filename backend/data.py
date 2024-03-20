@@ -50,39 +50,37 @@ class Stock:
 
 import datetime
 
-def fix_sentiment():
-    print("Fixing sentiment data")
-    # FILL IN GAPS IN SENTIMENT DATA
-    # CREATE COLUMN "WEIGHTED AVERAGE" FOR ENTIRE DATASET
-    # ASSIGN WEEKDAY VALUE TO EACH DAY
-    # THEN TAKE AVERAGE OF FRIDAY - SUNDAY REPORTS
-    # MERGE WITH STOCK DATA
-
-def fix_interest_rates():
-    print("Fixing interest rates")
-    # Read the CSV file into a DataFrame
-    df = pd.read_csv('csv_files/FEDFUNDS.csv')
-
-    # Convert the "DATE" column to datetime format
-    df['DATE'] = pd.to_datetime(df['DATE'])
-
-    # Create a DataFrame with daily dates for each month
-    date_range = pd.date_range(start=df['DATE'].min(), end=df['DATE'].max(), freq='D')
-    daily_df = pd.DataFrame({'DATE': date_range})
-
-    # Merge the daily DataFrame with the original DataFrame using a left join
-    merged_df = daily_df.merge(df, on='DATE', how='left')
-
-    # Fill missing values in the interest rate column using forward fill (ffill)
-    merged_df['FEDFUNDS'] = merged_df['FEDFUNDS'].ffill()
-
-    # Save the extrapolated data to a new CSV file
-    merged_df.to_csv('csv_files/extrapolated_interest_rates.csv', index=False)
+def fill_missing_dates(df, start_date, end_date):
+    # Create a list of all dates between start_date and end_date
+    all_dates = pd.date_range(start=start_date, end=end_date).strftime('%Y-%m-%d')
     
+    # Iterate through each ticker and ensure all dates are present
+    filled_dfs = []
+    for ticker in df['ticker'].unique():
+        ticker_df = df[df['ticker'] == ticker]
+        
+        # Reindex the DataFrame with all dates to fill in missing dates
+        ticker_filled_df = ticker_df.set_index('date').reindex(all_dates).reset_index()
+        
+        # Fill missing ticker values with the ticker name
+        ticker_filled_df['ticker'] = ticker_filled_df['ticker'].fillna(ticker)
+        
+        # Fill NaN values in other columns with 0
+        ticker_filled_df = ticker_filled_df.fillna(0)
+        
+        filled_dfs.append(ticker_filled_df)
+    
+    # Concatenate all filled DataFrames
+    filled_df = pd.concat(filled_dfs)
+    
+    return filled_df
+
     
 def main():
     print("Retrieving stock data")
-    fix_interest_rates()
+    df = pd.read_sql_query("SELECT * FROM sentiment_data ORDER BY ticker", conn)
+    filled_df = fill_missing_dates(df, '2014-03-19', '2024-03-19')
+    print(filled_df.head())
     """df = pd.read_csv('csv_files/stock_list.csv')
 
     i = 0
