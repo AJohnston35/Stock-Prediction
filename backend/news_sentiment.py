@@ -4,13 +4,17 @@
 # TODO: CREATE SINGLE DATABASE WITH STOCK DATA, SENTIMENT DATA, AND INTEREST RATES
 # FOR TRAINING, TAKE RANDOM SUBSET OF TICKERS ACCORDING TO PERCENTAGE COMPOSITION IN STOCK MARKET
 
-import pandas as pd
-import requests
-import concurrent.futures
-from ratelimit import limits, sleep_and_retry
-from datetime import datetime, timedelta
-from threading import Semaphore
-import mysql.connector
+import pandas as pd # For data manipulation
+
+import requests # For making API requests
+
+from datetime import datetime, timedelta # For date manipulation
+
+import concurrent.futures # For parallel processing
+from ratelimit import limits, sleep_and_retry # For rate limiting
+from threading import Semaphore # For concurrency control
+
+import mysql.connector # For database connection
 
 endpoint = 'stockaide-db.cluster-czcooo8241qk.us-east-2.rds.amazonaws.com'
 username = 'admin'
