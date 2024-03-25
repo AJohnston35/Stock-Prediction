@@ -1,3 +1,4 @@
+import random
 import numpy as np # For data preprocessing
 
 import pandas as pd # For dataframes
@@ -16,7 +17,6 @@ username = 'admin'
 password = 'mnmsstar15'
 database = 'stockaide'
 engine = create_engine(f'mysql+mysqlconnector://{username}:{password}@{endpoint}/{database}', echo=False)
-table = 'stock_data'
 
 conn = mysql.connector.connect(user=username, password=password,
                               host=endpoint, database=database)
@@ -28,7 +28,7 @@ import ta # For generating technical indicators on market data
 
 # TODO: Make the start and end date dynamic
 
-"""create_table_query = '''CREATE TABLE stock_data (
+"""create_table_query = '''CREATE TABLE subset_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
     Ticker TEXT,
     Date DATETIME,
@@ -132,9 +132,8 @@ import ta # For generating technical indicators on market data
 );'''
 
 cursor.execute(create_table_query)
-conn.commit()"""
-
-tickers = pd.read_csv('backend/csv_files/stock_list.csv').Code.unique()
+conn.commit()
+"""
 
 class Stock:
     ONE_MINUTE = 60
@@ -206,23 +205,32 @@ class Stock:
 def main():
     start_date = '2014-03-24'
     end_date = '2024-03-24'
-    max_threads = 75  # Adjust this based on your system's capabilities 
-    all_dfs = pd.DataFrame()
+    
+    max_threads = 20  # Adjust this based on your system's capabilities 
+    
+    tickers = pd.read_csv('backend/csv_files/stock_list.csv').Code.unique()
+
+    ticker_subset = ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META', 'NVDA', 'PYPL', 'ADBE', 'NFLX']
+    
+    list_dfs = []
+    
     # Use ThreadPoolExecutor to create a pool of threads
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
         # Submit tasks for each ticker to the executor
-        futures = {executor.submit(Stock(ticker, start_date, end_date).process_ticker): ticker for ticker in tickers}
+        futures = {executor.submit(Stock(ticker, start_date, end_date).process_ticker): ticker for ticker in ticker_subset}
         processed = 0
         total = len(futures)
         # Iterate over completed futures and print results
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result is not None:
-                all_dfs = pd.concat([all_dfs, result], ignore_index=True)
+                list_dfs = list_dfs.append(result)
             processed += 1
             print(f'{processed}/{total} completed', end='\r')
+            
+    all_dfs = pd.concat(list_dfs, ignore_index=True)
     
-    all_dfs.to_sql(table, con=engine, if_exists='append', index=False, chunksize=50000)
+    all_dfs.to_sql('subset_data', con=engine, if_exists='append', index=False, chunksize=50000)
 
 if __name__ == "__main__":
     main()
