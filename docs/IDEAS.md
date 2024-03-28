@@ -9,3 +9,5 @@
 # Social aspect on the website/app?
 
 # Mailing list that sends the predictions daily
+
+# Index fund that updates weekly/monthly with predicted stocks.
