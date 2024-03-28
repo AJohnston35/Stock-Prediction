@@ -4,6 +4,9 @@
 
 # Commented out code may be relevant for future use, but is not currently in use.
 
+# TODO: Get rid of class and make functions standalone
+# TODO: Implement training on multiple stocks
+# TODO: Alter data retrieval to new database schema
 
 from openai import chatgpt
 import math  # Mathematical functions
@@ -198,46 +201,9 @@ class Model:
         model = Sequential()
         
         n_neurons = 128 
-        # ADD INTEREST RATES
+
         # ADD INDUSTRY
-        # ADD NEWS SENTIMENT
-        
-        # Input layer with shape of (state_size, 1)
-        # Apply LSTM layer to input layer with 64 neurons (return sequences)
-        # Attention mechanism created using the TimeDistributed Dense layer
-        # Flatten the output and pass through a Dense layer with softmax activation
-        # To ensure compability with the LSTM output, the attention weights are repeated using the RepeatVector layer
-        # Permute layer to reshape the attention weights to match the LSTM output
-        # Multiply layer combines the LSTM output with the attention weights
-        # Dense layer with 32 neurons
-        # Dense layer with 8 neurons
-        # Dense output layer with self.action_size neurons (linear activation)
-        # Mean Squared Error loss function
-        # Adam optimizer with learning rate of 0.001
-        
-        # Agent:
-        # Initialization: configure parameters like size of state and action spaces, memory buffer capacity, and inventory present in stock price data
-        # Adopt the epsilon-greedy strategy for action selection
-        # Based on current state and predicted Q-values from the model, the agent explores the environment by selecting a random action with certain probability (epsilon) or exploits the knowledge by selection the action with the highest Q-value
-        # Experience replay is employed to enhance training stability and efficiency
-        # Past experiences (state, action, reward, and done) are stored in the memory buffer
-        # During training, random batch of experiences are sampled from the memory buffer to train the model
-        
-        # States: 
-        # Sequence of sigmoid-transformed differences between consecutive stock prices
-        
-        # Action space:
-        # Buy, sell, or hold a stock
-        # Agent relies on Q-values predicted by the DQN model
-        # Q-values are estimations of the future rewards
-        # The action selection process is guided by an exploration-exploitation strategy, epsilon-greedy
-        # Select the action with the highest Q-value
-        
-        # Rewards: 
-        # Occurs when agent chooses the "buy" action and purchases a stock at the current price
-        # Reward is based on selling price and initial buying price
-        # Total profit is continously monitored and updated
-        
+
         
         model.add(LSTM(n_neurons, return_sequences=True, input_shape=(x_train.shape[1], x_train.shape[2])))
         model.add(LSTM(n_neurons, return_sequences=True)) 

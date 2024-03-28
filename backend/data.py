@@ -128,12 +128,13 @@ import ta # For generating technical indicators on market data
     others_dlr FLOAT(53),
     others_cr FLOAT(53),
     Increase_Decrease BIGINT,
-    Returns FLOAT(53)
+    Close_returns FLOAT(53),
+    Adjusted_close_returns FLOAT(53)
 );'''
 
 cursor.execute(create_table_query)
-conn.commit()
-"""
+conn.commit()"""
+
 
 class Stock:
     ONE_MINUTE = 60
@@ -150,7 +151,8 @@ class Stock:
             historical_data = self.add_interest_rates(historical_data)
             historical_data = ta.add_all_ta_features(historical_data, open='Open', high='High', low='Low', close='Close', volume='Volume', fillna=True)
             historical_data['Increase_Decrease'] = np.where(historical_data['Volume'].shift(-1) > historical_data['Volume'], 1, 0)
-            historical_data['Returns'] = historical_data['Close'].pct_change()*100
+            historical_data['Close_returns'] = historical_data['Close'].pct_change()*100
+            historical_data['Adjusted_close_returns'] = historical_data['Adjusted_close'].pct_change()*100
             return historical_data
 
     @sleep_and_retry
@@ -206,7 +208,7 @@ def main():
     start_date = '2014-03-24'
     end_date = '2024-03-24'
     
-    max_threads = 20  # Adjust this based on your system's capabilities 
+    max_threads = 10  # Adjust this based on your system's capabilities 
     
     tickers = pd.read_csv('backend/csv_files/stock_list.csv').Code.unique()
 
@@ -224,7 +226,7 @@ def main():
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result is not None:
-                list_dfs = list_dfs.append(result)
+                list_dfs.append(result)
             processed += 1
             print(f'{processed}/{total} completed', end='\r')
             
